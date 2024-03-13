@@ -20,7 +20,6 @@ const BleManagerModule = NativeModules.BleManager;
 const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
 const App = () => {
-    const [isScanning, setIsScanning] = useState(false);
     const isDarkMode = useColorScheme() === 'dark';
     const backgroundStyle = {
         backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -28,6 +27,8 @@ const App = () => {
 
     const [devices, setDevices] = useState<Peripheral[]>([]);
     const [scanning, setScanning] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
+    const [bluetoothEnabled, setBluetoothEnabled] = useState(false);
 
     useEffect(() => {
         BleManager.start({showAlert: false}).then(() => {
@@ -38,6 +39,29 @@ const App = () => {
         };
     }, []);
 
+    const checkBleState = () => {
+        BleManager.checkState()
+            .then((state) => {
+                if (state === 'on') {
+                    setBluetoothEnabled(true);
+                } else {
+                    setBluetoothEnabled(false);
+                }
+            })
+            .catch((error) => {
+                console.error('Error checking Bluetooth status:', error);
+            });
+    }
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            checkBleState();
+        }, 5000); // 5000 milliseconds = 5 seconds
+
+        // Cleanup function to clear the interval when component unmounts
+        return () => clearInterval(interval);
+    }, []);
+
     const startScan = () => {
         setScanning(true);
         BleManager.scan([], 10, false).then(() => {
@@ -45,7 +69,7 @@ const App = () => {
         });
     };
     const stopScan = () => {
-        console.log('stop');
+        console.log('stop scan');
         BleManager.stopScan().then(() => {
             setScanning(false);
         });
@@ -87,15 +111,22 @@ const App = () => {
                     }}>
                     <View>
                         <Text
-                            style={{
-                                fontSize: 30,
-                                textAlign: 'center',
-                                color: isDarkMode ? Colors.white : Colors.black,
-                            }}>
+                            style={styles.textStyle}>
                             React Native BLE
                         </Text>
+                        <Text style={styles.textStyleWarning}>
+                            Bluetooth is {bluetoothEnabled ? 'enabled' : 'disabled'}
+                        </Text>
+                        <Text style={styles.textStyleWarning}>
+                            {!bluetoothEnabled ? 'Please, turn on bluetooth' : ''}
+                        </Text>
                     </View>
-                    <TouchableOpacity activeOpacity={0.5} style={styles.buttonStyle} onPress={startScan}>
+                    <TouchableOpacity
+                        disabled={!bluetoothEnabled}
+                        activeOpacity={0.5}
+                        style={bluetoothEnabled ? styles.buttonStyle : styles.buttonStyleDisabled}
+                        onPress={startScan}
+                    >
                         <Text style={styles.buttonTextStyle}>
                             {isScanning ? 'Scanning...' : 'Scan Bluetooth Devices'}
                         </Text>
@@ -112,8 +143,30 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         height: windowHeight,
     },
+    textStyle: {
+        fontSize: 30,
+        textAlign: 'center',
+        color: Colors.white,
+    },
+    textStyleWarning: {
+        fontSize: 24,
+        textAlign: 'center',
+        color: Colors.white,
+    },
     buttonStyle: {
         backgroundColor: '#307ecc',
+        borderWidth: 0,
+        color: '#FFFFFF',
+        borderColor: '#307ecc',
+        height: 40,
+        alignItems: 'center',
+        borderRadius: 30,
+        marginLeft: 35,
+        marginRight: 35,
+        marginTop: 15,
+    },
+    buttonStyleDisabled: {
+        backgroundColor: 'gray',
         borderWidth: 0,
         color: '#FFFFFF',
         borderColor: '#307ecc',
