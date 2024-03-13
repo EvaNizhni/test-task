@@ -1,4 +1,4 @@
-export const screensNames = {
+export const ScreensNames = {
     MAIN: 'Main screen',
     AUTH: 'Auth screen',
 };

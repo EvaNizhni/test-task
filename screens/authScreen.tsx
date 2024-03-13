@@ -1,13 +1,13 @@
 import React, {useState} from 'react';
 import {Alert, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import {Colors} from "react-native/Libraries/NewAppScreen";
-import {screensNames} from "./screensNames.ts";
+import {ScreensNames} from "./screensNames.ts";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {AppColors, commonStyles} from "./commonStyles.ts";
 
 type Props = {};
 
-const AuthScreen = ({navigation}: { navigation: NativeStackNavigationProp<Props, screensNames.AUTH> }) => {
+const AuthScreen = ({navigation}: { navigation: NativeStackNavigationProp<Props, ScreensNames.AUTH> }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
@@ -15,7 +15,7 @@ const AuthScreen = ({navigation}: { navigation: NativeStackNavigationProp<Props,
         // Here you can implement your authentication logic
         if (email === 'example@email.com' && password === 'password') {
             Alert.alert('Login Successful');
-            navigation.navigate(screensNames.MAIN);
+            navigation.navigate(ScreensNames.MAIN);
         } else {
             Alert.alert('Invalid email or password');
         }

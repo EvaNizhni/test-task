@@ -4,7 +4,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MainScreen from "./screens/mainScreen.tsx";
 import AuthScreen from "./screens/authScreen.tsx";
-import {screensNames} from "./screens/screensNames.ts";
+import {ScreensNames} from "./screens/screensNames.ts";
 import {Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, useColorScheme} from "react-native";
 import {Colors} from "react-native/Libraries/NewAppScreen";
 
@@ -38,10 +38,10 @@ const App = () => {
                             },
                         }}>
                         <Stack.Screen
-                            name={screensNames.MAIN}
+                            name={ScreensNames.MAIN}
                             component={MainScreen}
                         />
-                        <Stack.Screen name={screensNames.AUTH} component={AuthScreen}/>
+                        <Stack.Screen name={ScreensNames.AUTH} component={AuthScreen}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             </ScrollView>

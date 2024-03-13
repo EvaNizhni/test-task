@@ -12,7 +12,7 @@ import {
 import {Colors} from "react-native/Libraries/NewAppScreen";
 import BleManager, {Peripheral} from "react-native-ble-manager";
 import {deviceNameRegex, deviceNameRegexTest} from "../utils/regex.ts";
-import {screensNames} from "./screensNames.ts";
+import {ScreensNames} from "./screensNames.ts";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {AppColors, commonStyles} from "./commonStyles.ts";
 
@@ -22,12 +22,14 @@ const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 type Props = {};
 
 function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props> }) {
-    const isDarkMode = useColorScheme() === 'dark';
-
+    /// information about available devices
     const [devices, setDevices] = useState<Peripheral[]>([]);
+    /// State is app current in scanning mode
     const [isScanning, setIsScanning] = useState(false);
-    const [bluetoothEnabled, setBluetoothEnabled] = useState(false);
+    /// State is bluetooth currently swiched on
+    const [isBluetoothEnabled, setIsBluetoothEnabled] = useState(false);
 
+    /// use effect to start Ble manager
     useEffect(() => {
         BleManager.start({showAlert: false}).then(() => {
             console.log('BleManager initialized');
@@ -37,13 +39,24 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
         };
     }, []);
 
+    /// use effect to set up timer for check bluetooth state every 5 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            checkBleState(isBluetoothEnabled);
+        }, 5000); // 5000 milliseconds = 5 seconds
+
+        // Cleanup function to clear the interval when component unmounts
+        return () => clearInterval(interval);
+    }, [isBluetoothEnabled]);
+
+    /// function to check bluetooth state
     const checkBleState = (currentBleState: boolean) => {
         BleManager.checkState()
             .then((state) => {
                 const newBleState = state === 'on';
                 if (currentBleState !== newBleState) {
                     setIsScanning(false);
-                    setBluetoothEnabled(newBleState);
+                    setIsBluetoothEnabled(newBleState);
                     setUpBleAlert(newBleState);
                 }
             })
@@ -51,6 +64,46 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
                 console.error('Error checking Bluetooth status:', error);
             });
     }
+
+    /// use effect to subscribe for new founded devices
+    useEffect(() => {
+        const getDevices = BleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+
+        return () => {
+            stopScan();
+            getDevices.remove();
+        };
+    }, []);
+
+    /// check and save information about new device
+    const handleDiscoverPeripheral = (peripheral: Peripheral) => {
+        const foundDevice = devices.find((dev) => dev.id === peripheral.id);
+        console.log('name', peripheral.name);
+        if (deviceNameRegex.test(peripheral.name!)) {
+            setUpFoundedDeviceAlert(peripheral.name!);
+            stopScan();
+            navigation.navigate(ScreensNames.AUTH);
+            console.log('The device by pattern has been found');
+        }
+        if (!foundDevice) {
+            setDevices([...devices, peripheral]);
+        }
+    };
+
+    /// Function to start scan devices
+    const startScan = () => {
+        setIsScanning(true);
+        BleManager.scan([], 10, false).then(() => {
+            console.log('Scanning...');
+        });
+    };
+    /// Function to stop scan devices
+    const stopScan = () => {
+        console.log('stop scan');
+        BleManager.stopScan().then(() => {
+            setIsScanning(false);
+        });
+    };
 
     const setUpBleAlert = (state: boolean) => {
         Alert.alert('Bluetooth alert', state ? 'Bluetooth was switched on' : 'Bluetooth was switched off', [
@@ -64,51 +117,6 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
         ])
     }
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            checkBleState(bluetoothEnabled);
-        }, 5000); // 5000 milliseconds = 5 seconds
-
-        // Cleanup function to clear the interval when component unmounts
-        return () => clearInterval(interval);
-    }, [bluetoothEnabled]);
-
-    const startScan = () => {
-        setIsScanning(true);
-        BleManager.scan([], 10, false).then(() => {
-            console.log('Scanning...');
-        });
-    };
-    const stopScan = () => {
-        console.log('stop scan');
-        BleManager.stopScan().then(() => {
-            setIsScanning(false);
-        });
-    };
-
-    const handleDiscoverPeripheral = (peripheral: Peripheral) => {
-        const foundDevice = devices.find((dev) => dev.id === peripheral.id);
-        console.log('name', peripheral.name);
-        if (deviceNameRegex.test(peripheral.name!)) {
-            setUpFoundedDeviceAlert(peripheral.name!);
-            stopScan();
-            navigation.navigate(screensNames.AUTH);
-            console.log('The device by pattern has been found');
-        }
-        if (!foundDevice) {
-            setDevices([...devices, peripheral]);
-        }
-    };
-
-    useEffect(() => {
-        const getDevices = BleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
-
-        return () => {
-            stopScan();
-            getDevices.remove();
-        };
-    }, []);
-
     return (
         <View
             style={styles.container}>
@@ -118,16 +126,16 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
                     React Native BLE
                 </Text>
                 <Text style={styles.textStyleWarning}>
-                    Bluetooth is {bluetoothEnabled ? 'enabled' : 'disabled'}
+                    Bluetooth is {isBluetoothEnabled ? 'enabled' : 'disabled'}
                 </Text>
                 <Text style={styles.textStyleWarning}>
-                    {!bluetoothEnabled ? 'Please, turn on bluetooth' : ''}
+                    {!isBluetoothEnabled ? 'Please, turn on bluetooth' : ''}
                 </Text>
             </View>
             <TouchableOpacity
-                disabled={!bluetoothEnabled}
+                disabled={!isBluetoothEnabled}
                 activeOpacity={0.5}
-                style={bluetoothEnabled ? commonStyles.buttonStyle : commonStyles.buttonStyleDisabled}
+                style={isBluetoothEnabled ? commonStyles.buttonStyle : commonStyles.buttonStyleDisabled}
                 onPress={startScan}
             >
                 <Text style={commonStyles.buttonTextStyle}>
