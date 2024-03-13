@@ -1,20 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {
-    Alert,
-    NativeEventEmitter,
-    NativeModules,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View
-} from "react-native";
+import {NativeEventEmitter, NativeModules, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {Colors} from "react-native/Libraries/NewAppScreen";
 import BleManager, {Peripheral} from "react-native-ble-manager";
-import {deviceNameRegex, deviceNameRegexTest} from "../utils/regex.ts";
+import {deviceNameRegex} from "../utils/regex.ts";
 import {ScreensNames} from "./screensNames.ts";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {AppColors, commonStyles} from "./commonStyles.ts";
+import {setUpBleAlert, setUpFoundedDeviceAlert} from "../utils/alertConsts.tsx";
 
 const BleManagerModule = NativeModules.BleManager;
 const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
@@ -104,18 +96,6 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
             setIsScanning(false);
         });
     };
-
-    const setUpBleAlert = (state: boolean) => {
-        Alert.alert('Bluetooth alert', state ? 'Bluetooth was switched on' : 'Bluetooth was switched off', [
-            {text: 'OK', onPress: () => console.log('OK Pressed')},
-        ])
-    }
-
-    const setUpFoundedDeviceAlert = (name: string) => {
-        Alert.alert('Founded device', `The device by pattern has been found: ${name}`, [
-            {text: 'OK', onPress: () => console.log('OK Pressed')},
-        ])
-    }
 
     return (
         <View
