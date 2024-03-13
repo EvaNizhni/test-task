@@ -1,118 +1,133 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
+    Dimensions,
+    NativeEventEmitter,
+    NativeModules,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useColorScheme,
+    View,
 } from 'react-native';
+import BleManager, {Peripheral} from 'react-native-ble-manager';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+import {deviceNameRegex} from "./utils/regex.ts";
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const BleManagerModule = NativeModules.BleManager;
+const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const App = () => {
+    const [isScanning, setIsScanning] = useState(false);
+    const isDarkMode = useColorScheme() === 'dark';
+    const backgroundStyle = {
+        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    };
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+    const [devices, setDevices] = useState<Peripheral[]>([]);
+    const [scanning, setScanning] = useState(false);
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+    useEffect(() => {
+        BleManager.start({showAlert: false}).then(() => {
+            console.log('BleManager initialized');
+        });
+        return () => {
+            stopScan();
+        };
+    }, []);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+    const startScan = () => {
+        setScanning(true);
+        BleManager.scan([], 10, false).then(() => {
+            console.log('Scanning...');
+        });
+    };
+    const stopScan = () => {
+        console.log('stop');
+        BleManager.stopScan().then(() => {
+            setScanning(false);
+        });
+    };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+    const handleDiscoverPeripheral = (peripheral: Peripheral) => {
+        const foundDevice = devices.find((dev) => dev.id === peripheral.id);
+        if (deviceNameRegex.test(peripheral.name!)) {
+            console.log('The device by pattern has found');
+        }
+        if (!foundDevice) {
+            setDevices([...devices, peripheral]);
+        }
+    };
 
+    useEffect(() => {
+        const getDevices = BleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+
+        return () => {
+            stopScan();
+            getDevices.remove();
+        };
+    }, []);
+
+    return (
+        <SafeAreaView style={[backgroundStyle, styles.mainBody]}>
+            <StatusBar
+                barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                backgroundColor={backgroundStyle.backgroundColor}
+            />
+            <ScrollView
+                style={backgroundStyle}
+                contentContainerStyle={styles.mainBody}
+                contentInsetAdjustmentBehavior="automatic">
+                <View
+                    style={{
+                        backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+                        marginBottom: 40,
+                    }}>
+                    <View>
+                        <Text
+                            style={{
+                                fontSize: 30,
+                                textAlign: 'center',
+                                color: isDarkMode ? Colors.white : Colors.black,
+                            }}>
+                            React Native BLE
+                        </Text>
+                    </View>
+                    <TouchableOpacity activeOpacity={0.5} style={styles.buttonStyle} onPress={startScan}>
+                        <Text style={styles.buttonTextStyle}>
+                            {isScanning ? 'Scanning...' : 'Scan Bluetooth Devices'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    );
+};
+const windowHeight = Dimensions.get('window').height;
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+    mainBody: {
+        flex: 1,
+        justifyContent: 'center',
+        height: windowHeight,
+    },
+    buttonStyle: {
+        backgroundColor: '#307ecc',
+        borderWidth: 0,
+        color: '#FFFFFF',
+        borderColor: '#307ecc',
+        height: 40,
+        alignItems: 'center',
+        borderRadius: 30,
+        marginLeft: 35,
+        marginRight: 35,
+        marginTop: 15,
+    },
+    buttonTextStyle: {
+        color: '#FFFFFF',
+        paddingVertical: 10,
+        fontSize: 16,
+    },
 });
-
 export default App;
