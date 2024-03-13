@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
+    Alert,
     Dimensions,
     NativeEventEmitter,
     NativeModules,
@@ -10,7 +11,7 @@ import {
     Text,
     TouchableOpacity,
     useColorScheme,
-    View,
+    View
 } from 'react-native';
 import BleManager, {Peripheral} from 'react-native-ble-manager';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
@@ -39,13 +40,13 @@ const App = () => {
         };
     }, []);
 
-    const checkBleState = () => {
+    const checkBleState = (currentBleState: boolean) => {
         BleManager.checkState()
             .then((state) => {
-                if (state === 'on') {
-                    setBluetoothEnabled(true);
-                } else {
-                    setBluetoothEnabled(false);
+                const newBleState = state === 'on';
+                if (currentBleState !== newBleState) {
+                    setBluetoothEnabled(newBleState);
+                    setUpBleAlert(newBleState);
                 }
             })
             .catch((error) => {
@@ -53,14 +54,25 @@ const App = () => {
             });
     }
 
+    const setUpBleAlert = (state: boolean) => {
+        Alert.alert('Bluetooth alert', state ? 'Bluetooth was switched on' : 'Bluetooth was switched off', [
+            {
+                text: 'Cancel',
+                onPress: () => console.log('Cancel Pressed'),
+                style: 'cancel',
+            },
+            {text: 'OK', onPress: () => console.log('OK Pressed')},
+        ])
+    }
+
     useEffect(() => {
         const interval = setInterval(() => {
-            checkBleState();
+            checkBleState(bluetoothEnabled);
         }, 5000); // 5000 milliseconds = 5 seconds
 
         // Cleanup function to clear the interval when component unmounts
         return () => clearInterval(interval);
-    }, []);
+    }, [bluetoothEnabled]);
 
     const startScan = () => {
         setScanning(true);
