@@ -5,7 +5,9 @@ import {screensNames} from "./screensNames.ts";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {AppColors, commonStyles} from "./commonStyles.ts";
 
-const AuthScreen = ({navigation}: { navigation: NativeStackNavigationProp<_> }) => {
+type Props = {};
+
+const AuthScreen = ({navigation}: { navigation: NativeStackNavigationProp<Props, screensNames.AUTH> }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 

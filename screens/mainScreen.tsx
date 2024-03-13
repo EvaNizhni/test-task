@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import {Colors} from "react-native/Libraries/NewAppScreen";
 import BleManager, {Peripheral} from "react-native-ble-manager";
-import {deviceNameRegex} from "../utils/regex.ts";
+import {deviceNameRegexTest} from "../utils/regex.ts";
 import {screensNames} from "./screensNames.ts";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {AppColors, commonStyles} from "./commonStyles.ts";
@@ -19,7 +19,9 @@ import {AppColors, commonStyles} from "./commonStyles.ts";
 const BleManagerModule = NativeModules.BleManager;
 const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
-function MainScreen({navigation}: { navigation: NativeStackNavigationProp<_> }) {
+type Props = {};
+
+function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props> }) {
     const isDarkMode = useColorScheme() === 'dark';
 
     const [devices, setDevices] = useState<Peripheral[]>([]);
@@ -56,6 +58,12 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<_> }) 
         ])
     }
 
+    const setUpFoundedDeviceAlert = () => {
+        Alert.alert('Founded device', 'The device by pattern has been found', [
+            {text: 'OK', onPress: () => console.log('OK Pressed')},
+        ])
+    }
+
     useEffect(() => {
         const interval = setInterval(() => {
             checkBleState(bluetoothEnabled);
@@ -80,9 +88,11 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<_> }) 
 
     const handleDiscoverPeripheral = (peripheral: Peripheral) => {
         const foundDevice = devices.find((dev) => dev.id === peripheral.id);
-        if (deviceNameRegex.test(peripheral.name!)) {
+        console.log('name', peripheral.name);
+        if (deviceNameRegexTest.test(peripheral.name!)) {
+            setUpFoundedDeviceAlert();
             navigation.navigate(screensNames.AUTH);
-            console.log('The device by pattern has found');
+            console.log('The device by pattern has been found');
         }
         if (!foundDevice) {
             setDevices([...devices, peripheral]);
