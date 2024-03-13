@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import {Colors} from "react-native/Libraries/NewAppScreen";
 import BleManager, {Peripheral} from "react-native-ble-manager";
-import {deviceNameRegexTest} from "../utils/regex.ts";
+import {deviceNameRegex, deviceNameRegexTest} from "../utils/regex.ts";
 import {screensNames} from "./screensNames.ts";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {AppColors, commonStyles} from "./commonStyles.ts";
@@ -89,7 +89,7 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
     const handleDiscoverPeripheral = (peripheral: Peripheral) => {
         const foundDevice = devices.find((dev) => dev.id === peripheral.id);
         console.log('name', peripheral.name);
-        if (deviceNameRegexTest.test(peripheral.name!)) {
+        if (deviceNameRegex.test(peripheral.name!)) {
             setUpFoundedDeviceAlert(peripheral.name!);
             stopScan();
             navigation.navigate(screensNames.AUTH);
