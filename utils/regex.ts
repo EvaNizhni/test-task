@@ -1,3 +1,3 @@
 export const deviceNameRegex = new RegExp(/^Oplus-\d{4}$/);
 /// Test device names
-export const deviceNameRegexTest = new RegExp(/^PT-DD85506C20B4$/);
+export const deviceNameRegexTest = new RegExp(/^ELK-BLEDOM01$/);
