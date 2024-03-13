@@ -58,8 +58,8 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
         ])
     }
 
-    const setUpFoundedDeviceAlert = () => {
-        Alert.alert('Founded device', 'The device by pattern has been found', [
+    const setUpFoundedDeviceAlert = (name: string) => {
+        Alert.alert('Founded device', `The device by pattern has been found: ${name}`, [
             {text: 'OK', onPress: () => console.log('OK Pressed')},
         ])
     }
@@ -90,7 +90,7 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
         const foundDevice = devices.find((dev) => dev.id === peripheral.id);
         console.log('name', peripheral.name);
         if (deviceNameRegexTest.test(peripheral.name!)) {
-            setUpFoundedDeviceAlert();
+            setUpFoundedDeviceAlert(peripheral.name!);
             stopScan();
             navigation.navigate(screensNames.AUTH);
             console.log('The device by pattern has been found');
@@ -132,6 +132,17 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
             >
                 <Text style={commonStyles.buttonTextStyle}>
                     {isScanning ? 'Scanning...' : 'Scan Bluetooth Devices'}
+                </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                disabled={!isScanning}
+                activeOpacity={0.5}
+                style={isScanning ? commonStyles.buttonStyle : commonStyles.buttonStyleDisabled}
+                onPress={stopScan}
+            >
+                <Text style={commonStyles.buttonTextStyle}>
+                    Stop scanning
                 </Text>
             </TouchableOpacity>
         </View>
