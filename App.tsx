@@ -56,11 +56,6 @@ const App = () => {
 
     const setUpBleAlert = (state: boolean) => {
         Alert.alert('Bluetooth alert', state ? 'Bluetooth was switched on' : 'Bluetooth was switched off', [
-            {
-                text: 'Cancel',
-                onPress: () => console.log('Cancel Pressed'),
-                style: 'cancel',
-            },
             {text: 'OK', onPress: () => console.log('OK Pressed')},
         ])
     }
