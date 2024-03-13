@@ -25,7 +25,6 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
     const isDarkMode = useColorScheme() === 'dark';
 
     const [devices, setDevices] = useState<Peripheral[]>([]);
-    const [scanning, setScanning] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
     const [bluetoothEnabled, setBluetoothEnabled] = useState(false);
 
@@ -43,6 +42,7 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
             .then((state) => {
                 const newBleState = state === 'on';
                 if (currentBleState !== newBleState) {
+                    setIsScanning(false);
                     setBluetoothEnabled(newBleState);
                     setUpBleAlert(newBleState);
                 }
@@ -74,7 +74,7 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
     }, [bluetoothEnabled]);
 
     const startScan = () => {
-        setScanning(true);
+        setIsScanning(true);
         BleManager.scan([], 10, false).then(() => {
             console.log('Scanning...');
         });
@@ -82,7 +82,7 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
     const stopScan = () => {
         console.log('stop scan');
         BleManager.stopScan().then(() => {
-            setScanning(false);
+            setIsScanning(false);
         });
     };
 
@@ -91,6 +91,7 @@ function MainScreen({navigation}: { navigation: NativeStackNavigationProp<Props>
         console.log('name', peripheral.name);
         if (deviceNameRegexTest.test(peripheral.name!)) {
             setUpFoundedDeviceAlert();
+            stopScan();
             navigation.navigate(screensNames.AUTH);
             console.log('The device by pattern has been found');
         }
